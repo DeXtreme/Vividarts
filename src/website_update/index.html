@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Transformation Form</title>
+</head>
+<body>
+    <form id="imageForm" enctype="multipart/form-data">
+        <label for="file">Select an image:</label>
+        <input type="file" name="file" accept="image/*">
+        
+        <label for="transform">Choose a transformation:</label>
+        <select name="transform">
+            <option value="Greyscale">Greyscale</option>
+            <!-- Add more transformation options if needed -->
+        </select>
+
+        <button type="button" onclick="submitForm()">Submit</button>
+    </form>
+
+    <div id="loader" style="display:none;">Loading...</div>
+
+    <script>
+        function submitForm() {
+            document.getElementById('loader').style.display = 'block';
+
+            // Assuming you have an API_URL variable available in your JavaScript environment
+            const apiUrl = process.env.API_URL; 
+
+            fetch(apiUrl, {
+                method: 'POST',
+                body: new FormData(document.getElementById('imageForm')),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const imageId = data.image_id;
+                pollForImage(imageId);
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                document.getElementById('loader').style.display = 'none';
+            });
+        }
+
+        function pollForImage(imageId) {
+            const apiUrl = `${process.env.API_URL}/${imageId}`;
+
+            const pollInterval = setInterval(() => {
+                fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.url) {
+                        clearInterval(pollInterval);
+                        document.getElementById('loader').style.display = 'none';
+                        // Handle the image URL, e.g., display or download the image
+                        console.log('Image URL:', data.url);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error polling for image:', error);
+                    clearInterval(pollInterval);
+                    document.getElementById('loader').style.display = 'none';
+                });
+            }, 2000); // Adjust the interval as needed
+        }
+    </script>
+</body>
+</html>
