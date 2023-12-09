@@ -1,7 +1,6 @@
 resource "aws_api_gateway_rest_api" "api" {
   name        = "vividarts-api"
   description = "Vividarts api"
-
 }
 
 resource "aws_api_gateway_resource" "get_image_parent" {
@@ -16,17 +15,33 @@ resource "aws_api_gateway_resource" "get_image" {
   path_part   = "{image_id}"
 }
 
-resource "aws_api_gateway_method" "get_image" {
+resource "aws_api_gateway_method" "get_image_get" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.get_image.id
   http_method   = "GET"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "get_image" {
+resource "aws_api_gateway_method" "get_image_options" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.get_image.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_image_get" {
   rest_api_id             = aws_api_gateway_rest_api.api.id
   resource_id             = aws_api_gateway_resource.get_image.id
-  http_method             = aws_api_gateway_method.get_image.http_method
+  http_method             = aws_api_gateway_method.get_image_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_image.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "get_image_options" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.get_image.id
+  http_method             = aws_api_gateway_method.get_image_options.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.get_image.invoke_arn
@@ -40,17 +55,32 @@ resource "aws_api_gateway_resource" "process_image" {
 }
 
 
-resource "aws_api_gateway_method" "process_image" {
+resource "aws_api_gateway_method" "process_image_post" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.process_image.id
   http_method   = "POST"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "process_image" {
+resource "aws_api_gateway_method" "process_image_options" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.process_image.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "process_image_post" {
   rest_api_id             = aws_api_gateway_rest_api.api.id
   resource_id             = aws_api_gateway_resource.process_image.id
-  http_method             = aws_api_gateway_method.process_image.http_method
+  http_method             = aws_api_gateway_method.process_image_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.process_image.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "process_image_options" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.process_image.id
+  http_method             = aws_api_gateway_method.process_image_options.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.process_image.invoke_arn
@@ -66,7 +96,9 @@ resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   depends_on = [ 
-    aws_api_gateway_integration.get_image,
-    aws_api_gateway_integration.process_image 
+    aws_api_gateway_integration.get_image_get,
+    aws_api_gateway_integration.get_image_options,
+    aws_api_gateway_integration.process_image_options,
+    aws_api_gateway_integration.process_image_post  
   ]  
 }

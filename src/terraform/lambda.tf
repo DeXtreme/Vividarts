@@ -8,10 +8,18 @@ resource "aws_lambda_permission" "get_image" {
 
 resource "aws_lambda_permission" "process_image" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.get_image.function_name
+  function_name = aws_lambda_function.process_image.function_name
   principal     = "apigateway.amazonaws.com"
 
-  depends_on = [aws_lambda_function.get_image]
+  depends_on = [aws_lambda_function.process_image]
+}
+
+resource "aws_lambda_permission" "greyscale" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.greyscale.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  depends_on = [aws_lambda_function.greyscale]
 }
 
 
@@ -52,6 +60,7 @@ resource "aws_lambda_function" "greyscale" {
   runtime          = "python3.10"
   filename         = "../api/greyscale/greyscale.zip"
   source_code_hash = filebase64("../api/greyscale/greyscale.zip")
+  timeout = 60
   environment {
     variables = {
       S3_BUCKET = aws_s3_bucket.results.bucket

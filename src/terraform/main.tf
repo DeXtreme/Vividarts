@@ -8,7 +8,7 @@ terraform {
 
   backend "s3" {
     bucket = "vivid-test-terraform-backend"
-    key    = "terraform"
+    key    = "terraform.tfstate"
     region = "us-east-1"
   }
 }
@@ -20,10 +20,11 @@ provider "aws" {
 
 resource "aws_s3_bucket" "results" {
   bucket = "vividarts-lambda-result-bucket"
+  force_destroy = true
 }
 
 
-/*
+
 resource "aws_eks_cluster" "cluster" {
   name = "vividarts-cluster"
   vpc_config {
@@ -54,4 +55,4 @@ resource "aws_ecr_repository" "ecr" {
   force_delete = true
 }
 
-*/
+

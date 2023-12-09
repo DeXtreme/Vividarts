@@ -84,6 +84,19 @@ data "aws_iam_policy_document" "lambda_s3" {
   }
 }
 
+data "aws_iam_policy_document" "lambda_lambda" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+     "arn:aws:lambda:us-east-1:226535979006:function:*" 
+    ]
+  }
+}
+
 
 resource "aws_iam_role" "lambda" {
   name               = "vividarts-lambda-role"
@@ -91,6 +104,10 @@ resource "aws_iam_role" "lambda" {
   inline_policy {
     name   = "vividarts-s3-access"
     policy = data.aws_iam_policy_document.lambda_s3.json
+  }
+  inline_policy {
+    name   = "vividarts-lambda-access"
+    policy = data.aws_iam_policy_document.lambda_lambda.json
   }
 }
 
