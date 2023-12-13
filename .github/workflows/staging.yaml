@@ -36,12 +36,12 @@ jobs:
         run: zip -r src/api/getImage/getImage.zip src/api/getImage/*
       
       - name: Create processImage zip
-        run: zip -r src/api/processImage.zip src/api/processImage/*
+        run: zip -r src/api/processImage/processImage.zip src/api/processImage/*
 
       - name: Create greyscale zip
         run: |
-          pip install -r src/api/greyscale/requirements.txt -t src/api/greyscale/
-          zip -r src/api/greyscale.zip src/api/greyscale/*
+          pip install -r src/api/Greyscale/requirements.txt -t src/api/Greyscale/
+          zip -r src/api/Greyscale/Greyscale.zip src/api/Greyscale/*
 
       - name: Provision infrastructure
         run: cd src/terraform && terraform apply -auto-approve
