@@ -171,13 +171,19 @@
                                     <div class="col-lg-12">
                                         <div class="contact-content-inner-modal">
                                             <div id="contact-form">
-                                                <form action="/upload" method="post" enctype="multipart/form-data">
-
-                                                    <input type="file" name="photo" accept="image/*" required>
+                                                <form id="imageForm">
+                                                    <input type="file" id="file" name="file" accept="image/jpeg" required>
+                                                    <label for="transform">Choose a transformation:</label>
+                                                    <select name="transform" id="transform">
+                                                        <option value="Greyscale">Greyscale</option>
+                                                        <!-- Add more transformation options if needed -->
+                                                    </select>                         
                                                     <div class="contact-form-submit-wrapper">
-                                                        <button class="the-button the-button-light" id="submit" type="submit"><span>Submit</span></button>
+                                                        <button class="the-button the-button-light" id="submit" type="button" onclick="submitForm()"><span>Submit</span></button>
                                                     </div>
                                                 </form>
+
+                                                <div id="loader" style="display:none;">Loading...</div>
                                             </div>
 
                                             <div class="inner-divider"></div>
@@ -194,12 +200,70 @@
             </div>
         </div>
         
+        <script>
+            function submitForm() {
+                document.getElementById('loader').style.display = 'block';
+    
+                const apiUrl = "{{ API_URL }}/processImage"; 
 
+                var file = document.getElementById('file').files[0];
+
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    var base64String = e.target.result.split(',')[1];
+                    
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            "type": document.getElementById('transform').value,
+                            "file": base64String 
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Image ID:", data)
+                        const imageId = data.image_id;
+                        pollForImage(imageId);
+                    })
+                    .catch(error => {
+                        console.error('Error submitting form:', error);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                }
+                reader.readAsDataURL(file);
+            }
+    
+            function pollForImage(imageId) {
+                const apiUrl = `{{ API_URL }}/getImage/${imageId}`;
+    
+                const pollInterval = setInterval(() => {
+                    fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.url) {
+                            clearInterval(pollInterval);
+                            document.getElementById('loader').textContent = data.url
+                            //document.getElementById('loader').style.display = 'none';
+                            // Handle the image URL, e.g., display or download the image
+                            console.log('Image URL:', data.url);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error polling for image:', error);
+                        clearInterval(pollInterval);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                }, 5000); // Adjust the interval as needed
+            }
+        </script>
 
         <!-- scripts start -->
         <script src="{{ url_for('static', filename='js/plugins.js') }}">
         </script> 
         <script src="{{ url_for('static', filename='js/wylex.js') }}">
-        </script><!-- scripts end -->
+        </script>
+        <!-- scripts end -->
     </body>
 </html>

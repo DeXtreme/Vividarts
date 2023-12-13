@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name : $ENV
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vividarts
+  namespace: $ENV
+data:
+  API_URL : $API_URL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vividarts
+  namespace: $ENV
+spec:
+  replicas: 2
+
+  template:
+    metadata:
+      labels:
+        name: app
+    spec:
+      containers:
+        - name: frontend
+          envFrom:
+            - configMapRef:
+                name: vividarts
+          image: $IMAGE
+          ports:
+            - containerPort: 5000
+  
+  selector:
+    matchLabels:
+      name: app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vividarts
+  namespace: $ENV
+spec:
+  selector:
+    name: app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: LoadBalancer
+
