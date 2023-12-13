@@ -4,6 +4,21 @@ import boto3
 from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
+
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "OPTIONS,GET",
+    }
+
+    # Check if the request is a preflight request (OPTIONS)
+    if event["httpMethod"] == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": headers,
+            "body": "Preflight request successful",
+        }
+    
     # Extract the image_id from the path parameter
     image_id = event.get('pathParameters', {}).get('image_id')
 
@@ -11,6 +26,7 @@ def lambda_handler(event, context):
     if not image_id:
         return {
             'statusCode': 400,
+            "headers": headers,
             'body': json.dumps('Missing required parameter: image_id')
         }
 
@@ -20,13 +36,15 @@ def lambda_handler(event, context):
     if not s3_bucket:
         return {
             'statusCode': 500,
+            "headers": headers,
             'body': json.dumps('S3_BUCKET environment variable not set')
         }
 
     # Generate a presigned URL for the image in S3
     try:
         s3_client = boto3.client('s3')
-        presigned_url = generate_presigned_url(s3_client, s3_bucket, f'{image_id}.png')  # Adjust the file format as needed
+        s3_client.head_object(Bucket=s3_bucket, Key=f'{image_id}.jpg')
+        presigned_url = generate_presigned_url(s3_client, s3_bucket, f'{image_id}.jpg')
 
         # Return a JSON response with the presigned URL
         response = {
@@ -35,12 +53,14 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            "headers": headers,
             'body': json.dumps(response)
         }
 
     except ClientError as e:
         return {
             'statusCode': 500,
+            "headers": headers,
             'body': json.dumps(f'Error generating presigned URL: {str(e)}')
         }
 

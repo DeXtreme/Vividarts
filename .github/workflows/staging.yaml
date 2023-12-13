@@ -1,0 +1,80 @@
+name: "Deploy to Staging"
+
+on:
+  push:
+    branches:
+      - "release"
+
+  workflow_dispatch:
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v3
+        id: install 
+      
+      - name: Set up AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+        
+      - name: Create getImage zip
+        run: zip -r src/api/getImage/getImage.zip src/api/getImage/*
+      
+      - name: Create processImage zip
+        run: zip -r src/api/processImage.zip src/api/processImage/*
+
+      - name: Create greyscale zip
+        run: |
+          pip install -r src/api/greyscale/requirements.txt -t src/api/greyscale/
+          zip -r src/api/greyscale.zip src/api/greyscale/*
+
+      - name: Provision infrastructure
+        run: cd src/terraform && terraform apply -auto-approve
+
+      - name: Create app image
+        run: |
+          ECR_URL=$(cd src/terraform && terraform output ecr_url)
+          VERSION=$(cat src/app/version.txt)
+          docker build -t $ECR_URL:$VERSION src/app
+          
+      
+      - name: Push image
+        run: |
+          ECR_URL=$(cd src/terraform && terraform output ecr_url)
+          VERSION=$(cat src/app/version.txt)
+          REGION=$(cd src/terraform && terraform output region)
+          aws ecr get-login-password --region $REGION | docker login \
+          --username AWS \
+          --password-stdin $ECR_URL
+          docker push $ECR_URL:$VERSION
+      
+      - name: Deploy app to K8
+        run: |
+          ECR_URL=$(cd src/terraform && terraform output ecr_url)
+          VERSION=$(cat src/app/version.txt)
+          REGION=$(cd src/terraform && terraform output region)
+          export API_URL=$(cd src/terraform && terraform output api_url)
+          export IMAGE=$ECR_URL:$VERSION
+          export ENV=staging
+          aws eks update-kubeconfig --region $REGION
+          cat src/app/deployment.yaml | envsubst | kubectl apply -f -
+      
+      - name: Get LoadBalancer URL
+        run: kubectl get service vividarts -n $ENV --output jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+
+
