@@ -56,7 +56,7 @@ resource "aws_lambda_function" "process_image" {
 
 resource "aws_lambda_function" "greyscale" {
   function_name    = "greyscale_function"
-  handler          = "greyscale.lambda_handler"
+  handler          = "Greyscale.lambda_handler"
   runtime          = "python3.10"
   filename         = "../api/Greyscale/Greyscale.zip"
   source_code_hash = filebase64("../api/Greyscale/Greyscale.zip")
