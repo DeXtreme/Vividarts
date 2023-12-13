@@ -63,9 +63,10 @@ jobs:
           VERSION=$(cat src/app/version.txt)
           REGION=$(cd src/terraform && terraform output -raw region)
           export API_URL=$(cd src/terraform && terraform output -raw api_url)
+          export NAME=$(cd src/terraform && terraform output -raw eks_cluster_name)
           export IMAGE="$ECR_URL:$VERSION"
           export ENV=staging
-          aws eks update-kubeconfig --region $REGION
+          aws eks update-kubeconfig --region $REGION --name $NAME
           cat src/app/deployment.yaml | envsubst | kubectl apply -f -
       
       - name: Get LoadBalancer URL
