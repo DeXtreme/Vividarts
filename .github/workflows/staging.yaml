@@ -49,7 +49,7 @@ jobs:
         run: |
           ECR_URL=$(cd src/terraform && terraform output ecr_url)
           VERSION=$(cat src/app/version.txt)
-          docker build -t $ECR_URL:latest src/app
+          docker build -t "$ECR_URL:$VERSION" src/app
           
       
       - name: Push image
@@ -60,7 +60,7 @@ jobs:
           aws ecr get-login-password --region $REGION | docker login \
           --username AWS \
           --password-stdin $ECR_URL
-          docker push $ECR_URL:latest
+          docker push "$ECR_URL:$VERSION"
       
       - name: Deploy app to K8
         run: |
@@ -68,7 +68,7 @@ jobs:
           VERSION=$(cat src/app/version.txt)
           REGION=$(cd src/terraform && terraform output region)
           export API_URL=$(cd src/terraform && terraform output api_url)
-          export IMAGE=$ECR_URL:latest
+          export IMAGE="$ECR_URL:$VERSION"
           export ENV=staging
           aws eks update-kubeconfig --region $REGION
           cat src/app/deployment.yaml | envsubst | kubectl apply -f -
