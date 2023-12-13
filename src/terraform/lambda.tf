@@ -58,8 +58,8 @@ resource "aws_lambda_function" "greyscale" {
   function_name    = "greyscale_function"
   handler          = "greyscale.lambda_handler"
   runtime          = "python3.10"
-  filename         = "../api/greyscale/greyscale.zip"
-  source_code_hash = filebase64("../api/greyscale/greyscale.zip")
+  filename         = "../api/Greyscale/Greyscale.zip"
+  source_code_hash = filebase64("../api/Greyscale/Greyscale.zip")
   timeout = 60
   environment {
     variables = {
