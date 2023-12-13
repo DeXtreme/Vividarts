@@ -24,15 +24,20 @@ jobs:
 
         
       - name: Create getImage zip
-        run: zip -r src/api/getImage/getImage.zip src/api/getImage/*
+        run: |
+          cd src/api/getImage
+          zip getImage.zip ./*
       
       - name: Create processImage zip
-        run: zip -r src/api/processImage/processImage.zip src/api/processImage/*
+        run: |
+          cd src/api/processImage
+          zip processImage.zip ./*
 
       - name: Create greyscale zip
         run: |
-          pip install -r src/api/Greyscale/requirements.txt -t src/api/Greyscale/
-          zip -r src/api/Greyscale/Greyscale.zip src/api/Greyscale/*
+          cd src/api/Greyscale/
+          pip install -r requirements.txt -t ./
+          zip -r Greyscale.zip ./*
 
       - name: Provision infrastructure
         run: |
