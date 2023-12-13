@@ -20,10 +20,6 @@ jobs:
         with:
           python-version: '3.10'
       
-      - name: Set up Kubectl
-        uses: azure/setup-kubectl@v3
-        id: install 
-      
       - name: Set up AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -44,7 +40,10 @@ jobs:
           zip -r src/api/Greyscale/Greyscale.zip src/api/Greyscale/*
 
       - name: Provision infrastructure
-        run: cd src/terraform && terraform apply -auto-approve
+        run: |
+          cd src/terraform
+          terraform init
+          terraform apply -auto-approve
 
       - name: Create app image
         run: |
