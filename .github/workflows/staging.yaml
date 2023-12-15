@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "release"
+    paths:
+      - "src/version.txt"
 
   workflow_dispatch:
 
@@ -48,14 +50,14 @@ jobs:
       - name: Create app image
         run: |
           ECR_URL=$(cd src/terraform && terraform output -raw ecr_url)
-          VERSION=$(cat src/app/version.txt)
+          VERSION=$(cat src/version.txt)
           docker build -t $ECR_URL:$VERSION src/app
           
       
       - name: Push image
         run: |
           ECR_URL=$(cd src/terraform && terraform output -raw ecr_url)
-          VERSION=$(cat src/app/version.txt)
+          VERSION=$(cat src/version.txt)
           REGION=$(cd src/terraform && terraform output -raw region)
           aws ecr get-login-password --region $REGION | docker login \
           --username AWS \
@@ -65,7 +67,7 @@ jobs:
       - name: Deploy app to K8
         run: |
           ECR_URL=$(cd src/terraform && terraform output -raw ecr_url)
-          VERSION=$(cat src/app/version.txt)
+          VERSION=$(cat src/version.txt)
           REGION=$(cd src/terraform && terraform output -raw region)
           export API_URL=$(cd src/terraform && terraform output -raw api_url)
           export NAME=$(cd src/terraform && terraform output -raw eks_cluster_name)
