@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "release"
+    paths:
+      - "src/version.txt"
 
   workflow_dispatch:
 
